@@ -24,21 +24,31 @@ class SliderController extends Controller
         $request->validate([
             'titulo' => 'required|string|max:255',
             'descripcion' => 'required|string',
-            'imagen' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048', // Validación de imagen
-            'enlace' => 'nullable|url',
+            'imagen' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'tipo_enlace' => 'required|string|in:/categorias,/comercios,/productos',
             'fecha' => 'required|date'
         ]);
 
-        // Subir la imagen
+        $imagenNombre = null;
+
+        // Procesar imagen localmente
         if ($request->hasFile('imagen')) {
-            $imagenPath = $request->file('imagen')->store('sliders', 'public');
+            // Generar nombre único
+            $extension = $request->file('imagen')->getClientOriginalExtension();
+            $fileName = 'slider_' . uniqid() . '.' . $extension;
+            
+            // Guardar en storage compartido
+            $request->file('imagen')->storeAs('sliders', $fileName, 'shared');
+            
+            // Guardar solo el nombre del archivo en la BD
+            $imagenNombre = $fileName;
         }
 
         Slider::create([
             'titulo' => $request->titulo,
             'descripcion' => $request->descripcion,
-            'imagen' => $imagenPath, // Guardamos la ruta relativa
-            'enlace' => $request->enlace,
+            'imagen' => $imagenNombre,
+            'enlace' => $request->tipo_enlace,
             'fecha' => $request->fecha
         ]);
 
@@ -46,31 +56,31 @@ class SliderController extends Controller
             ->with('success', 'Slider creado exitosamente.');
     }
 
-    public function edit(Slider $slider)
-    {
-        return view('sliders.edit', compact('slider'));
-    }
-
     public function update(Request $request, Slider $slider)
     {
         $request->validate([
             'titulo' => 'required|string|max:255',
             'descripcion' => 'required|string',
-            'imagen' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', // Opcional en actualizar
-            'enlace' => 'nullable|url',
+            'imagen' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'tipo_enlace' => 'required|string|in:/categorias,/comercios,/productos',
             'fecha' => 'required|date'
         ]);
 
-        $data = $request->only(['titulo', 'descripcion', 'enlace', 'fecha']);
+        $data = $request->only(['titulo', 'descripcion', 'fecha']);
+        $data['enlace'] = $request->tipo_enlace;
 
-        // Si se sube una nueva imagen, actualizarla
+        // Procesar la nueva imagen si se subió
         if ($request->hasFile('imagen')) {
-            // Eliminar la imagen anterior
+            // Eliminar la imagen anterior si existe
             if ($slider->imagen) {
-                Storage::disk('public')->delete($slider->imagen);
+                Storage::disk('shared')->delete('sliders/' . $slider->imagen);
             }
-            $imagenPath = $request->file('imagen')->store('sliders', 'public');
-            $data['imagen'] = $imagenPath;
+            
+            // Guardar nueva imagen
+            $extension = $request->file('imagen')->getClientOriginalExtension();
+            $fileName = 'slider_' . uniqid() . '.' . $extension;
+            $request->file('imagen')->storeAs('sliders', $fileName, 'shared');
+            $data['imagen'] = $fileName;
         }
 
         $slider->update($data);
@@ -79,11 +89,16 @@ class SliderController extends Controller
             ->with('success', 'Slider actualizado exitosamente.');
     }
 
+    public function edit(Slider $slider)
+    {
+        return view('sliders.edit', compact('slider'));
+    }
+
     public function destroy(Slider $slider)
     {
         // Eliminar la imagen del storage
         if ($slider->imagen) {
-            Storage::disk('public')->delete($slider->imagen);
+            Storage::disk('shared')->delete('sliders/' . $slider->imagen);
         }
 
         $slider->delete();

@@ -74,4 +74,29 @@ Route::middleware('auth')->group(function () {
     });
 });
 
+// Crear enlace simbólico para desarrollo
+Route::get('/test-image/{id}', function($id) {
+    $slider = \App\Models\Slider::find($id);
+    
+    if (!$slider) {
+        return "Slider no encontrado";
+    }
+    
+    // Verificar diferentes aspectos
+    $diagnostico = [
+        'slider_id' => $slider->id,
+        'nombre_imagen_bd' => $slider->imagen,
+        'ruta_fisica' => 'C:/laravel/shared-images/sliders/' . $slider->imagen,
+        'existe_archivo' => file_exists('C:/laravel/shared-images/sliders/' . $slider->imagen) ? 'SÍ' : 'NO',
+        'url_generada' => $slider->imagen_url,
+    ];
+    
+    // Intentar acceder directamente
+    $rutaDirecta = public_path('shared-images/sliders/' . $slider->imagen);
+    $diagnostico['ruta_publica'] = $rutaDirecta;
+    $diagnostico['existe_en_public'] = file_exists($rutaDirecta) ? 'SÍ' : 'NO';
+    
+    return $diagnostico;
+});
+
 require __DIR__.'/auth.php';

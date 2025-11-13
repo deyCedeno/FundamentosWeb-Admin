@@ -29,14 +29,24 @@
                     <input type="file" class="form-control" id="imagen" name="imagen">
                     @if($slider->imagen)
                         <div class="mt-2">
-                            <img src="{{ asset('storage/'.$slider->imagen) }}" alt="{{ $slider->titulo }}" style="max-width: 200px; height: auto;">
+                            <img src="{{ $slider->imagen_url }}" alt="{{ $slider->titulo }}" style="max-width: 200px; height: auto;">
                         </div>
                     @endif
                 </div>
+                
+                <!-- SELECT PARA EL ENLACE -->
                 <div class="mb-3">
-                    <label for="enlace" class="form-label">Enlace</label>
-                    <input type="url" class="form-control" id="enlace" name="enlace" value="{{ old('enlace', $slider->enlace) }}">
+                    <label for="tipo_enlace" class="form-label">Enlace de destino</label>
+                    <select class="form-control" id="tipo_enlace" name="tipo_enlace" required>
+                        <option value="">-- Seleccionar destino --</option>
+                        <option value="/categorias" {{ old('tipo_enlace', $slider->enlace) == '/categorias' ? 'selected' : '' }}>Categorías</option>
+                        <option value="/comercios" {{ old('tipo_enlace', $slider->enlace) == '/comercios' ? 'selected' : '' }}>Comercios</option>
+                        <option value="/productos" {{ old('tipo_enlace', $slider->enlace) == '/productos' ? 'selected' : '' }}>Productos</option>
+                    </select>
+                    <input type="hidden" id="enlace" name="enlace" value="{{ old('enlace', $slider->enlace) }}">
+                    <div class="form-text">Selecciona a qué sección debe redirigir este slider</div>
                 </div>
+
                 <div class="mb-3">
                     <label for="fecha" class="form-label">Fecha</label>
                     <input type="datetime-local" class="form-control" id="fecha" name="fecha" value="{{ old('fecha', $slider->fecha->format('Y-m-d\TH:i')) }}" required>
@@ -48,4 +58,26 @@
             </div>
         </form>
     </div>
+@endsection
+
+@section('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const selectEnlace = document.getElementById('tipo_enlace');
+    const inputEnlace = document.getElementById('enlace');
+    
+    // Actualizar el campo hidden cuando cambie el select
+    selectEnlace.addEventListener('change', function() {
+        inputEnlace.value = this.value;
+    });
+    
+    // Inicializar el valor al cargar la página
+    if (selectEnlace.value) {
+        inputEnlace.value = selectEnlace.value;
+    } else {
+        // Si no hay valor seleccionado, usar el valor actual del enlace
+        selectEnlace.value = inputEnlace.value;
+    }
+});
+</script>
 @endsection

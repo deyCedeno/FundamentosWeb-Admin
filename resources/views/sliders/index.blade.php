@@ -31,8 +31,16 @@
                         @foreach($sliders as $slider)
                         <tr>
                             <td>{{ $slider->id }}</td>
-                            <td>
-                                <img src="{{ Storage::url($slider->imagen) }}" alt="{{ $slider->titulo }}" style="max-width: 100px; height: auto;">
+                            <td style="text-align: center; vertical-align: middle;">
+                                @if($slider->tiene_imagen)
+                                    <img src="{{ $slider->imagen_url }}" 
+                                         alt="{{ $slider->titulo }}" 
+                                         style="max-width: 100px; max-height: 60px; object-fit: cover; border: 1px solid #ddd; border-radius: 4px;">
+                                @else
+                                    <div style="width: 100px; height: 60px; background: #f8f9fa; display: flex; align-items: center; justify-content: center; border: 1px dashed #ccc; border-radius: 4px;">
+                                        <i class="fas fa-image" style="color: #ccc; font-size: 20px;"></i>
+                                    </div>
+                                @endif
                             </td>
                             <td>{{ $slider->titulo }}</td>
                             <td>{{ Str::limit($slider->descripcion, 50) }}</td>
