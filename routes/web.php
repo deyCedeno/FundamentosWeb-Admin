@@ -1,18 +1,77 @@
 <?php
 
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\CategoriaController;
+use App\Http\Controllers\ComercioController;
+use App\Http\Controllers\ProductoController;
+use App\Http\Controllers\SliderController;
 use Illuminate\Support\Facades\Route;
-
-/*
-|--------------------------------------------------------------------------
-| Web Routes
-|--------------------------------------------------------------------------
-|
-| Here is where you can register web routes for your application. These
-| routes are loaded by the RouteServiceProvider within a group which
-| contains the "web" middleware group. Now create something great!
-|
-*/
 
 Route::get('/', function () {
     return view('welcome');
 });
+
+Route::get('/dashboard', function () {
+    return view('dashboard');
+})->middleware(['auth', 'verified'])->name('dashboard');
+
+Route::middleware('auth')->group(function () {
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    // Rutas administrativas
+    Route::prefix('admin')->group(function () {
+        // Sliders
+        Route::resource('sliders', SliderController::class)->names([
+            'index' => 'sliders.index',
+            'create' => 'sliders.create',
+            'store' => 'sliders.store',
+            'edit' => 'sliders.edit',
+            'update' => 'sliders.update',
+            'destroy' => 'sliders.destroy',
+        ]);
+
+        // Categorías
+        Route::resource('categorias', CategoriaController::class)->names([
+            'index' => 'categorias.index',
+            'create' => 'categorias.create',
+            'store' => 'categorias.store',
+            'edit' => 'categorias.edit',
+            'update' => 'categorias.update',
+            'destroy' => 'categorias.destroy',
+        ]);
+
+        // Comercios
+        Route::resource('comercios', ComercioController::class)->names([
+            'index' => 'comercios.index',
+            'create' => 'comercios.create',
+            'store' => 'comercios.store',
+            'edit' => 'comercios.edit',
+            'update' => 'comercios.update',
+            'destroy' => 'comercios.destroy',
+        ]);
+
+        // Galería de comercios
+        Route::get('comercios/{comercio}/galeria', [ComercioController::class, 'galeria'])->name('comercios.galeria');
+        Route::post('comercios/{comercio}/imagenes', [ComercioController::class, 'storeImagen'])->name('comercios.storeImagen');
+        Route::delete('imagenes-comercio/{imagen}', [ComercioController::class, 'destroyImagen'])->name('comercios.destroyImagen');
+
+        // Productos
+        Route::resource('productos', ProductoController::class)->names([
+            'index' => 'productos.index',
+            'create' => 'productos.create',
+            'store' => 'productos.store',
+            'edit' => 'productos.edit',
+            'update' => 'productos.update',
+            'destroy' => 'productos.destroy',
+        ]);
+
+        // Galería de productos
+        Route::get('productos/{producto}/galeria', [ProductoController::class, 'galeria'])->name('productos.galeria');
+        Route::post('productos/{producto}/imagenes', [ProductoController::class, 'storeImagen'])->name('productos.storeImagen');
+        Route::delete('imagenes-producto/{imagen}', [ProductoController::class, 'destroyImagen'])->name('productos.destroyImagen');
+    });
+});
+
+require __DIR__.'/auth.php';
