@@ -99,4 +99,24 @@ Route::get('/test-image/{id}', function($id) {
     return $diagnostico;
 });
 
+// En web.php - ruta temporal para diagnóstico
+Route::get('/debug-categoria/{id}', function($id) {
+    $categoria = \App\Models\Categoria::find($id);
+    
+    if (!$categoria) {
+        return "Categoría no encontrada";
+    }
+    
+    return [
+        'id' => $categoria->idCategoria,
+        'nombre' => $categoria->nombre,
+        'urlImagen_bd' => $categoria->urlImagen,
+        'imagen_url_attribute' => $categoria->imagen_url,
+        'tiene_imagen_attribute' => $categoria->tiene_imagen ? 'SÍ' : 'NO',
+        'es_url_externa' => filter_var($categoria->urlImagen, FILTER_VALIDATE_URL) ? 'SÍ' : 'NO',
+        'archivo_existe' => $categoria->urlImagen && !filter_var($categoria->urlImagen, FILTER_VALIDATE_URL) ? 
+            (Storage::disk('shared')->exists('categorias/' . $categoria->urlImagen) ? 'SÍ' : 'NO') : 'N/A'
+    ];
+});
+
 require __DIR__.'/auth.php';

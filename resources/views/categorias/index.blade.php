@@ -31,7 +31,15 @@
                         <tr>
                             <td>{{ $categoria->idCategoria }}</td>
                             <td>
-                                <img src="{{ $categoria->urlImagen }}" alt="{{ $categoria->nombre }}" style="max-width: 100px; height: auto;">
+                                @if($categoria->tiene_imagen)
+                                    <img src="{{ $categoria->imagen_url }}" 
+                                         alt="{{ $categoria->nombre }}" 
+                                         style="max-width: 100px; height: auto; border: 1px solid #ddd; border-radius: 4px;">
+                                @else
+                                    <div style="width: 100px; height: 60px; background: #f8f9fa; display: flex; align-items: center; justify-content: center; border: 1px dashed #ccc; border-radius: 4px;">
+                                        <small style="color: #999;">NO IMG</small>
+                                    </div>
+                                @endif
                             </td>
                             <td>{{ $categoria->nombre }}</td>
                             <td>{{ $categoria->comerciosCount() }}</td>

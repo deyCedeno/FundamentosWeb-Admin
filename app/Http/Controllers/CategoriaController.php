@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Categoria;
+use Illuminate\Support\Facades\Storage;
 
 class CategoriaController extends Controller
 {
@@ -22,10 +23,28 @@ class CategoriaController extends Controller
     {
         $request->validate([
             'nombre' => 'required|string|max:100',
-            'urlImagen' => 'required|url|max:255'
+            'imagen' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:2048' // Cambié a 'imagen'
         ]);
 
-        Categoria::create($request->all());
+        $imagenNombre = null;
+
+        // Procesar imagen
+        if ($request->hasFile('imagen')) { // Cambié a 'imagen'
+            // Generar nombre único
+            $extension = $request->file('imagen')->getClientOriginalExtension();
+            $fileName = 'categoria_' . uniqid() . '.' . $extension;
+            
+            // Guardar en storage compartido
+            $request->file('imagen')->storeAs('categorias', $fileName, 'shared');
+            
+            // Guardar solo el nombre del archivo en la BD
+            $imagenNombre = $fileName;
+        }
+
+        Categoria::create([
+            'nombre' => $request->nombre,
+            'urlImagen' => $imagenNombre // Guardar en el campo correcto de la BD
+        ]);
 
         return redirect()->route('categorias.index')
             ->with('success', 'Categoría creada exitosamente.');
@@ -40,10 +59,28 @@ class CategoriaController extends Controller
     {
         $request->validate([
             'nombre' => 'required|string|max:100',
-            'urlImagen' => 'required|url|max:255'
+            'imagen' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048' // Cambié a 'imagen'
         ]);
 
-        $categoria->update($request->all());
+        $data = [
+            'nombre' => $request->nombre
+        ];
+
+        // Procesar la nueva imagen si se subió
+        if ($request->hasFile('imagen')) { // Cambié a 'imagen'
+            // Eliminar la imagen anterior si existe y es un archivo local
+            if ($categoria->urlImagen && !filter_var($categoria->urlImagen, FILTER_VALIDATE_URL)) {
+                Storage::disk('shared')->delete('categorias/' . $categoria->urlImagen);
+            }
+            
+            // Guardar nueva imagen
+            $extension = $request->file('imagen')->getClientOriginalExtension();
+            $fileName = 'categoria_' . uniqid() . '.' . $extension;
+            $request->file('imagen')->storeAs('categorias', $fileName, 'shared');
+            $data['urlImagen'] = $fileName;
+        }
+
+        $categoria->update($data);
 
         return redirect()->route('categorias.index')
             ->with('success', 'Categoría actualizada exitosamente.');
@@ -51,6 +88,11 @@ class CategoriaController extends Controller
 
     public function destroy(Categoria $categoria)
     {
+        // Eliminar la imagen del storage solo si es un archivo local
+        if ($categoria->urlImagen && !filter_var($categoria->urlImagen, FILTER_VALIDATE_URL)) {
+            Storage::disk('shared')->delete('categorias/' . $categoria->urlImagen);
+        }
+
         $categoria->delete();
 
         return redirect()->route('categorias.index')
