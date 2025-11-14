@@ -12,7 +12,7 @@
         <div class="card-header">
             <h3 class="card-title">Crear Producto</h3>
         </div>
-        <form action="{{ route('productos.store') }}" method="POST">
+        <form action="{{ route('productos.store') }}" method="POST" enctype="multipart/form-data">
             @csrf
             <div class="card-body">
                 <div class="mb-3">
@@ -39,8 +39,11 @@
                     </select>
                 </div>
                 <div class="mb-3">
-                    <label for="imagenDestacada" class="form-label">URL de la Imagen Destacada</label>
-                    <input type="url" class="form-control" id="imagenDestacada" name="imagenDestacada" value="{{ old('imagenDestacada') }}" required>
+                    <label for="imagenDestacada" class="form-label">Imagen Destacada</label>
+                    <input type="file" class="form-control" id="imagenDestacada" name="imagenDestacada" accept="image/*" required>
+                    <div class="form-text">
+                        Formatos permitidos: JPEG, PNG, JPG, GIF, WEBP. Tamaño máximo: 2MB
+                    </div>
                 </div>
                 <div class="mb-3">
                     <label for="idComercio" class="form-label">Comercio</label>

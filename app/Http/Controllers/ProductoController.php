@@ -6,6 +6,7 @@ use App\Models\Producto;
 use App\Models\Comercio;
 use App\Models\ProductoImagen;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class ProductoController extends Controller
 {
@@ -28,11 +29,28 @@ class ProductoController extends Controller
             'descripcion' => 'required|string|max:255',
             'precio' => 'required|numeric|min:0',
             'tipoProducto' => 'required|string|max:20',
-            'imagenDestacada' => 'required|url',
+            'imagenDestacada' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
             'idComercio' => 'required|exists:comercio,idComercio'
         ]);
 
-        Producto::create($request->all());
+        $imagenDestacadaNombre = null;
+
+        // Procesar imagen destacada
+        if ($request->hasFile('imagenDestacada')) {
+            $extension = $request->file('imagenDestacada')->getClientOriginalExtension();
+            $fileName = 'producto_destacada_' . uniqid() . '.' . $extension;
+            $request->file('imagenDestacada')->storeAs('productos', $fileName, 'shared');
+            $imagenDestacadaNombre = $fileName;
+        }
+
+        Producto::create([
+            'nombre' => $request->nombre,
+            'descripcion' => $request->descripcion,
+            'precio' => $request->precio,
+            'tipoProducto' => $request->tipoProducto,
+            'imagenDestacada' => $imagenDestacadaNombre,
+            'idComercio' => $request->idComercio
+        ]);
 
         return redirect()->route('productos.index')
             ->with('success', 'Producto creado exitosamente.');
@@ -51,11 +69,26 @@ class ProductoController extends Controller
             'descripcion' => 'required|string|max:255',
             'precio' => 'required|numeric|min:0',
             'tipoProducto' => 'required|string|max:20',
-            'imagenDestacada' => 'required|url',
+            'imagenDestacada' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
             'idComercio' => 'required|exists:comercio,idComercio'
         ]);
 
-        $producto->update($request->all());
+        $data = $request->only(['nombre', 'descripcion', 'precio', 'tipoProducto', 'idComercio']);
+
+        // Procesar nueva imagen destacada si se subió
+        if ($request->hasFile('imagenDestacada')) {
+            // Eliminar imagen anterior si existe y es local
+            if ($producto->imagenDestacada && !filter_var($producto->imagenDestacada, FILTER_VALIDATE_URL)) {
+                Storage::disk('shared')->delete('productos/' . $producto->imagenDestacada);
+            }
+            
+            $extension = $request->file('imagenDestacada')->getClientOriginalExtension();
+            $fileName = 'producto_destacada_' . uniqid() . '.' . $extension;
+            $request->file('imagenDestacada')->storeAs('productos', $fileName, 'shared');
+            $data['imagenDestacada'] = $fileName;
+        }
+
+        $producto->update($data);
 
         return redirect()->route('productos.index')
             ->with('success', 'Producto actualizado exitosamente.');
@@ -63,6 +96,18 @@ class ProductoController extends Controller
 
     public function destroy(Producto $producto)
     {
+        // Eliminar imagen destacada si es local
+        if ($producto->imagenDestacada && !filter_var($producto->imagenDestacada, FILTER_VALIDATE_URL)) {
+            Storage::disk('shared')->delete('productos/' . $producto->imagenDestacada);
+        }
+
+        // Eliminar imágenes de la galería
+        foreach ($producto->imagenes as $imagen) {
+            if ($imagen->urlImagen && !filter_var($imagen->urlImagen, FILTER_VALIDATE_URL)) {
+                Storage::disk('shared')->delete('productos/galeria/' . $imagen->urlImagen);
+            }
+        }
+
         $producto->delete();
 
         return redirect()->route('productos.index')
@@ -79,12 +124,21 @@ class ProductoController extends Controller
     public function storeImagen(Request $request, Producto $producto)
     {
         $request->validate([
-            'urlImagen' => 'required|url'
+            'imagen' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:2048'
         ]);
+
+        $imagenNombre = null;
+
+        if ($request->hasFile('imagen')) {
+            $extension = $request->file('imagen')->getClientOriginalExtension();
+            $fileName = 'producto_galeria_' . uniqid() . '.' . $extension;
+            $request->file('imagen')->storeAs('productos/galeria', $fileName, 'shared');
+            $imagenNombre = $fileName;
+        }
 
         ProductoImagen::create([
             'idProducto' => $producto->idProducto,
-            'urlImagen' => $request->urlImagen
+            'urlImagen' => $imagenNombre
         ]);
 
         return redirect()->route('productos.galeria', $producto)
@@ -93,6 +147,10 @@ class ProductoController extends Controller
 
     public function destroyImagen(ProductoImagen $imagen)
     {
+        if ($imagen->urlImagen && !filter_var($imagen->urlImagen, FILTER_VALIDATE_URL)) {
+            Storage::disk('shared')->delete('productos/galeria/' . $imagen->urlImagen);
+        }
+
         $productoId = $imagen->idProducto;
         $imagen->delete();
 

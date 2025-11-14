@@ -12,7 +12,7 @@
         <div class="card-header">
             <h3 class="card-title">Editar Producto</h3>
         </div>
-        <form action="{{ route('productos.update', $producto) }}" method="POST">
+        <form action="{{ route('productos.update', $producto) }}" method="POST" enctype="multipart/form-data">
             @csrf
             @method('PUT')
             <div class="card-body">
@@ -40,8 +40,17 @@
                     </select>
                 </div>
                 <div class="mb-3">
-                    <label for="imagenDestacada" class="form-label">URL de la Imagen Destacada</label>
-                    <input type="url" class="form-control" id="imagenDestacada" name="imagenDestacada" value="{{ old('imagenDestacada', $producto->imagenDestacada) }}" required>
+                    <label for="imagenDestacada" class="form-label">Imagen Destacada</label>
+                    <input type="file" class="form-control" id="imagenDestacada" name="imagenDestacada" accept="image/*">
+                    <div class="form-text">
+                        Formatos permitidos: JPEG, PNG, JPG, GIF, WEBP. Tamaño máximo: 2MB
+                        @if($producto->tiene_imagen_destacada)
+                            <br><strong>Imagen actual:</strong>
+                            <div class="mt-2">
+                                <img src="{{ $producto->imagen_destacada_url }}" alt="{{ $producto->nombre }}" style="max-width: 200px; height: auto; border: 1px solid #ddd; border-radius: 4px;">
+                            </div>
+                        @endif
+                    </div>
                 </div>
                 <div class="mb-3">
                     <label for="idComercio" class="form-label">Comercio</label>

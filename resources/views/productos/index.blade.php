@@ -33,7 +33,15 @@
                         <tr>
                             <td>{{ $producto->idProducto }}</td>
                             <td>
-                                <img src="{{ $producto->imagenDestacada }}" alt="{{ $producto->nombre }}" style="max-width: 100px; height: auto;">
+                                @if($producto->tiene_imagen_destacada)
+                                    <img src="{{ $producto->imagen_destacada_url }}" 
+                                         alt="{{ $producto->nombre }}" 
+                                         style="max-width: 100px; height: auto; border: 1px solid #ddd; border-radius: 4px;">
+                                @else
+                                    <div style="width: 100px; height: 60px; background: #f8f9fa; display: flex; align-items: center; justify-content: center; border: 1px dashed #ccc; border-radius: 4px;">
+                                        <small style="color: #999;">NO IMG</small>
+                                    </div>
+                                @endif
                             </td>
                             <td>{{ $producto->nombre }}</td>
                             <td>₡{{ number_format($producto->precio, 2) }}</td>
