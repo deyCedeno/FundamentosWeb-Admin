@@ -8,6 +8,7 @@ use App\Models\Telefono;
 use App\Models\Correo;
 use App\Models\ComercioImagen;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class ComercioController extends Controller
 {
@@ -32,13 +33,31 @@ class ComercioController extends Controller
             'facebook' => 'nullable|url',
             'instagram' => 'nullable|url',
             'urlMapa' => 'required|url',
-            'imagenDestacada' => 'required|url',
+            'imagenDestacada' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:2048', // Cambiar a file
             'categorias' => 'required|array',
             'telefonos' => 'required|array',
             'correos' => 'required|array'
         ]);
 
-        $comercio = Comercio::create($request->all());
+        $imagenDestacadaNombre = null;
+
+        // Procesar imagen destacada
+        if ($request->hasFile('imagenDestacada')) {
+            $extension = $request->file('imagenDestacada')->getClientOriginalExtension();
+            $fileName = 'comercio_destacada_' . uniqid() . '.' . $extension;
+            $request->file('imagenDestacada')->storeAs('comercios', $fileName, 'shared');
+            $imagenDestacadaNombre = $fileName;
+        }
+
+        $comercio = Comercio::create([
+            'nombre' => $request->nombre,
+            'descripcion' => $request->descripcion,
+            'dirección' => $request->dirección,
+            'facebook' => $request->facebook,
+            'instagram' => $request->instagram,
+            'urlMapa' => $request->urlMapa,
+            'imagenDestacada' => $imagenDestacadaNombre
+        ]);
         
         // Sincronizar categorías
         $comercio->categorias()->sync($request->categorias);
@@ -83,11 +102,26 @@ class ComercioController extends Controller
             'facebook' => 'nullable|url',
             'instagram' => 'nullable|url',
             'urlMapa' => 'required|url',
-            'imagenDestacada' => 'required|url',
+            'imagenDestacada' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048', // Cambiar a file
             'categorias' => 'required|array'
         ]);
 
-        $comercio->update($request->all());
+        $data = $request->only(['nombre', 'descripcion', 'dirección', 'facebook', 'instagram', 'urlMapa']);
+
+        // Procesar nueva imagen destacada si se subió
+        if ($request->hasFile('imagenDestacada')) {
+            // Eliminar imagen anterior si existe y es local
+            if ($comercio->imagenDestacada && !filter_var($comercio->imagenDestacada, FILTER_VALIDATE_URL)) {
+                Storage::disk('shared')->delete('comercios/' . $comercio->imagenDestacada);
+            }
+            
+            $extension = $request->file('imagenDestacada')->getClientOriginalExtension();
+            $fileName = 'comercio_destacada_' . uniqid() . '.' . $extension;
+            $request->file('imagenDestacada')->storeAs('comercios', $fileName, 'shared');
+            $data['imagenDestacada'] = $fileName;
+        }
+
+        $comercio->update($data);
         $comercio->categorias()->sync($request->categorias);
 
         return redirect()->route('comercios.index')
@@ -96,6 +130,18 @@ class ComercioController extends Controller
 
     public function destroy(Comercio $comercio)
     {
+        // Eliminar imagen destacada si es local
+        if ($comercio->imagenDestacada && !filter_var($comercio->imagenDestacada, FILTER_VALIDATE_URL)) {
+            Storage::disk('shared')->delete('comercios/' . $comercio->imagenDestacada);
+        }
+
+        // Eliminar imágenes de la galería
+        foreach ($comercio->imagenes as $imagen) {
+            if ($imagen->imagen && !filter_var($imagen->imagen, FILTER_VALIDATE_URL)) {
+                Storage::disk('shared')->delete('comercios/galeria/' . $imagen->imagen);
+            }
+        }
+
         $comercio->delete();
 
         return redirect()->route('comercios.index')
@@ -112,12 +158,21 @@ class ComercioController extends Controller
     public function storeImagen(Request $request, Comercio $comercio)
     {
         $request->validate([
-            'urlImagen' => 'required|url'
+            'imagen' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:2048' // Cambiar a file
         ]);
+
+        $imagenNombre = null;
+
+        if ($request->hasFile('imagen')) {
+            $extension = $request->file('imagen')->getClientOriginalExtension();
+            $fileName = 'comercio_galeria_' . uniqid() . '.' . $extension;
+            $request->file('imagen')->storeAs('comercios/galeria', $fileName, 'shared');
+            $imagenNombre = $fileName;
+        }
 
         ComercioImagen::create([
             'idComercio' => $comercio->idComercio,
-            'urlImagen' => $request->urlImagen
+            'urlImagen' => $imagenNombre
         ]);
 
         return redirect()->route('comercios.galeria', $comercio)
@@ -126,6 +181,10 @@ class ComercioController extends Controller
 
     public function destroyImagen(ComercioImagen $imagen)
     {
+        if ($imagen->urlImagen && !filter_var($imagen->urlImagen, FILTER_VALIDATE_URL)) {
+            Storage::disk('shared')->delete('comercios/galeria/' . $imagen->urlImagen);
+        }
+
         $comercioId = $imagen->idComercio;
         $imagen->delete();
 

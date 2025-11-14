@@ -119,4 +119,26 @@ Route::get('/debug-categoria/{id}', function($id) {
     ];
 });
 
+// En web.php - agregar esta ruta temporal
+Route::get('/debug-comercio-imagen/{id}', function($id) {
+    $imagen = \App\Models\ComercioImagen::find($id);
+    
+    if (!$imagen) {
+        return "Imagen no encontrada";
+    }
+    
+    return [
+        'id' => $imagen->id,
+        'idComercio' => $imagen->idComercio,
+        'urlImagen_bd' => $imagen->urlImagen,
+        'imagen_url_attribute' => $imagen->imagen_url,
+        'tiene_imagen_attribute' => $imagen->tiene_imagen ? 'SÍ' : 'NO',
+        'es_url_externa' => filter_var($imagen->urlImagen, FILTER_VALIDATE_URL) ? 'SÍ' : 'NO',
+        'archivo_existe' => $imagen->urlImagen && !filter_var($imagen->urlImagen, FILTER_VALIDATE_URL) ? 
+            (Storage::disk('shared')->exists('comercios/galeria/' . $imagen->urlImagen) ? 'SÍ' : 'NO') : 'N/A',
+        'ruta_fisica' => 'C:/laravel/shared-images/comercios/galeria/' . $imagen->urlImagen,
+        'existe_fisicamente' => file_exists('C:/laravel/shared-images/comercios/galeria/' . $imagen->urlImagen) ? 'SÍ' : 'NO'
+    ];
+});
+
 require __DIR__.'/auth.php';

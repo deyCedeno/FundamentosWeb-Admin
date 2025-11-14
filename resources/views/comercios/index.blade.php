@@ -32,7 +32,15 @@
                         <tr>
                             <td>{{ $comercio->idComercio }}</td>
                             <td>
-                                <img src="{{ $comercio->imagenDestacada }}" alt="{{ $comercio->nombre }}" style="max-width: 100px; height: auto;">
+                                @if($comercio->tiene_imagen_destacada)
+                                    <img src="{{ $comercio->imagen_destacada_url }}" 
+                                         alt="{{ $comercio->nombre }}" 
+                                         style="max-width: 100px; height: auto; border: 1px solid #ddd; border-radius: 4px;">
+                                @else
+                                    <div style="width: 100px; height: 60px; background: #f8f9fa; display: flex; align-items: center; justify-content: center; border: 1px dashed #ccc; border-radius: 4px;">
+                                        <small style="color: #999;">NO IMG</small>
+                                    </div>
+                                @endif
                             </td>
                             <td>{{ $comercio->nombre }}</td>
                             <td>{{ Str::limit($comercio->descripcion, 50) }}</td>

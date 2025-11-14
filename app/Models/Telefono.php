@@ -11,6 +11,7 @@ class Telefono extends Model
 
     protected $table = 'telefono';
     protected $primaryKey = 'idTelefono';
+    public $timestamps = false;
     
     protected $fillable = [
         'telefono',

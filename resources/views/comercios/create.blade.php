@@ -12,7 +12,7 @@
         <div class="card-header">
             <h3 class="card-title">Crear Comercio</h3>
         </div>
-        <form action="{{ route('comercios.store') }}" method="POST">
+        <form action="{{ route('comercios.store') }}" method="POST" enctype="multipart/form-data">
             @csrf
             <div class="card-body">
                 <div class="mb-3">
@@ -27,6 +27,23 @@
                     <label for="dirección" class="form-label">Dirección</label>
                     <input type="text" class="form-control" id="dirección" name="dirección" value="{{ old('dirección') }}" required>
                 </div>
+                
+                <!-- OPCIONES PARA GOOGLE MAPS -->
+                <div class="mb-3">
+                    <label for="urlMapa" class="form-label">URL de Google Maps</label>
+                    <input type="url" class="form-control" id="urlMapa" name="urlMapa" value="{{ old('urlMapa') }}" required>
+                    <div class="form-text">
+                        <strong>Opciones para obtener el enlace:</strong>
+                        <ul class="mb-1">
+                            <li>Ve a Google Maps y busca el lugar</li>
+                            <li>Haz clic en "Compartir" y selecciona "Insertar un mapa"</li>
+                            <li>Copia el enlace que comienza con: <code>https://www.google.com/maps/embed?...</code></li>
+                        </ul>
+                        <strong>O usa este formato:</strong> 
+                        <code>https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d...[tu_código]</code>
+                    </div>
+                </div>
+
                 <div class="mb-3">
                     <label for="facebook" class="form-label">Facebook</label>
                     <input type="url" class="form-control" id="facebook" name="facebook" value="{{ old('facebook') }}">
@@ -35,13 +52,13 @@
                     <label for="instagram" class="form-label">Instagram</label>
                     <input type="url" class="form-control" id="instagram" name="instagram" value="{{ old('instagram') }}">
                 </div>
+                
                 <div class="mb-3">
-                    <label for="urlMapa" class="form-label">URL del Mapa</label>
-                    <input type="url" class="form-control" id="urlMapa" name="urlMapa" value="{{ old('urlMapa') }}" required>
-                </div>
-                <div class="mb-3">
-                    <label for="imagenDestacada" class="form-label">URL de la Imagen Destacada</label>
-                    <input type="url" class="form-control" id="imagenDestacada" name="imagenDestacada" value="{{ old('imagenDestacada') }}" required>
+                    <label for="imagenDestacada" class="form-label">Imagen Destacada</label>
+                    <input type="file" class="form-control" id="imagenDestacada" name="imagenDestacada" accept="image/*" required>
+                    <div class="form-text">
+                        Formatos permitidos: JPEG, PNG, JPG, GIF, WEBP. Tamaño máximo: 2MB
+                    </div>
                 </div>
                 
                 <div class="mb-3">

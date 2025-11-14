@@ -1,4 +1,4 @@
-@extends('layout.app')
+@extends('layouts.app')
 
 @section('title', 'Editar Comercio')
 
@@ -12,7 +12,7 @@
         <div class="card-header">
             <h3 class="card-title">Editar Comercio</h3>
         </div>
-        <form action="{{ route('comercios.update', $comercio) }}" method="POST">
+        <form action="{{ route('comercios.update', $comercio) }}" method="POST" enctype="multipart/form-data">
             @csrf
             @method('PUT')
             <div class="card-body">
@@ -28,6 +28,16 @@
                     <label for="dirección" class="form-label">Dirección</label>
                     <input type="text" class="form-control" id="dirección" name="dirección" value="{{ old('dirección', $comercio->dirección) }}" required>
                 </div>
+                
+                <div class="mb-3">
+                    <label for="urlMapa" class="form-label">URL de Google Maps</label>
+                    <input type="url" class="form-control" id="urlMapa" name="urlMapa" value="{{ old('urlMapa', $comercio->urlMapa) }}" required>
+                    <div class="form-text">
+                        <strong>Formato recomendado:</strong> 
+                        <code>https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d...[tu_código]</code>
+                    </div>
+                </div>
+
                 <div class="mb-3">
                     <label for="facebook" class="form-label">Facebook</label>
                     <input type="url" class="form-control" id="facebook" name="facebook" value="{{ old('facebook', $comercio->facebook) }}">
@@ -36,13 +46,19 @@
                     <label for="instagram" class="form-label">Instagram</label>
                     <input type="url" class="form-control" id="instagram" name="instagram" value="{{ old('instagram', $comercio->instagram) }}">
                 </div>
+                
                 <div class="mb-3">
-                    <label for="urlMapa" class="form-label">URL del Mapa</label>
-                    <input type="url" class="form-control" id="urlMapa" name="urlMapa" value="{{ old('urlMapa', $comercio->urlMapa) }}" required>
-                </div>
-                <div class="mb-3">
-                    <label for="imagenDestacada" class="form-label">URL de la Imagen Destacada</label>
-                    <input type="url" class="form-control" id="imagenDestacada" name="imagenDestacada" value="{{ old('imagenDestacada', $comercio->imagenDestacada) }}" required>
+                    <label for="imagenDestacada" class="form-label">Imagen Destacada</label>
+                    <input type="file" class="form-control" id="imagenDestacada" name="imagenDestacada" accept="image/*">
+                    <div class="form-text">
+                        Formatos permitidos: JPEG, PNG, JPG, GIF, WEBP. Tamaño máximo: 2MB
+                        @if($comercio->tiene_imagen_destacada)
+                            <br><strong>Imagen actual:</strong>
+                            <div class="mt-2">
+                                <img src="{{ $comercio->imagen_destacada_url }}" alt="{{ $comercio->nombre }}" style="max-width: 200px; height: auto; border: 1px solid #ddd; border-radius: 4px;">
+                            </div>
+                        @endif
+                    </div>
                 </div>
                 
                 <div class="mb-3">

@@ -11,6 +11,7 @@ class Correo extends Model
 
     protected $table = 'correo';
     protected $primaryKey = 'idCorreo';
+    public $timestamps = false;
     
     protected $fillable = [
         'correo',
